@@ -6,7 +6,8 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     linux-headers \
-    bluez
+    bluez \
+    kmod
 
 WORKDIR /app
 COPY requirements.txt .

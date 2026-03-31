@@ -551,7 +551,14 @@ async def ingress_middleware(request: web.Request, handler) -> web.Response:
     return await handler(request)
 
 
+def load_kernel_modules() -> None:
+    for module in ["hid", "hid_wiimote", "hid-wiimote"]:
+        subprocess.run(["modprobe", module], capture_output=True)
+    print("[weii] Kernel module load attempted.", flush=True)
+
+
 def main() -> None:
+    load_kernel_modules()
     app = web.Application(middlewares=[ingress_middleware])
     app.router.add_get("/", handle_index)
     app.router.add_post("/measure", handle_measure)
