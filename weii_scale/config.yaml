@@ -9,8 +9,7 @@ arch:
   - armv7
   - armhf
 init: false
-privileged:
-  - SYS_ADMIN
+full_access: true
 
 # Gives access to all /dev/input/* devices (balance board appears here after BT pairing)
 devices:
