@@ -339,7 +339,7 @@ INDEX_HTML = """\
   <div class="card">
     <h2>Measurement</h2>
     <div class="controls">
-      <button id="measure-btn" onclick="measure()">Measure</button>
+      <button id="measure-btn">Measure</button>
       <span id="status-badge">
         <span id="status-dot"></span>
         <span id="status-text">idle</span>
@@ -530,6 +530,7 @@ INDEX_HTML = """\
     }
 
     // --- Init ---
+    document.getElementById("measure-btn").addEventListener("click", measure);
     buildChart(initialData);
     // Sync current state on load (in case a measurement was in progress)
     fetch(BASE + "/status").then(r => r.json()).then(d => {
