@@ -493,7 +493,7 @@ INDEX_HTML = """\
       btn.disabled = (data.status === "scanning" || data.status === "measuring");
 
       if (data.log && data.log.length > 0) {
-        logEl.textContent = data.log.join("\n");
+        logEl.textContent = data.log.join("\\n");
         logEl.scrollTop = logEl.scrollHeight;
       }
 
