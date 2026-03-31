@@ -1,0 +1,39 @@
+name: Weii Scale
+version: "1.0.0"
+slug: weii_scale
+description: Measure weight using a Wii Balance Board via Bluetooth.
+url: https://github.com/skorokithakis/weii
+arch:
+  - aarch64
+  - amd64
+  - armv7
+  - armhf
+init: false
+
+# Gives access to all /dev/input/* devices (balance board appears here after BT pairing)
+devices:
+  - /dev/input
+
+# Required for bluetoothctl to reach the BlueZ D-Bus service on the host
+host_dbus: true
+
+# Puts the add-on on the host network so HA's rest_command can reach it at localhost:8765
+host_network: true
+
+# Ingress serves the web UI (graph + measure button) inside the HA sidebar
+ingress: true
+ingress_port: 8765
+panel_icon: mdi:scale-bathroom
+panel_title: Weii Scale
+
+# Persists measurements across restarts
+map:
+  - data:rw
+
+options:
+  address: "AA:BB:CC:DD:EE:FF"
+  adjust: 0.0
+
+schema:
+  address: str
+  adjust: float

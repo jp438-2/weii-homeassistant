@@ -1,0 +1,17 @@
+# Add these cards to any Lovelace dashboard view.
+# The button triggers a measurement; the entity shows the last result.
+# The full graph lives in the add-on's sidebar panel (Weii Scale).
+
+type: vertical-stack
+cards:
+  - type: button
+    name: Measure Weight
+    icon: mdi:scale-bathroom
+    tap_action:
+      action: call-service
+      service: rest_command.weii_measure
+
+  - type: entity
+    entity: sensor.weii_scale_weight
+    name: Last Weight
+    icon: mdi:scale-bathroom

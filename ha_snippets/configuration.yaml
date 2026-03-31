@@ -1,0 +1,7 @@
+# Add this to your Home Assistant configuration.yaml
+# It lets you trigger a Weii measurement from a native HA button/dashboard card.
+
+rest_command:
+  weii_measure:
+    url: "http://localhost:8765/measure"
+    method: POST
