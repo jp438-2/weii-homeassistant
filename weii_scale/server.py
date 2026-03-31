@@ -158,22 +158,24 @@ def _measure_blocking(address: str, adjust: float) -> Optional[float]:
                 if None not in data:
                     return sum(data)  # type: ignore[arg-type]
                 data = [None] * 4
+        raise RuntimeError("Board disconnected during measurement.")
 
     samples: list[float] = []
-    while True:
-        m = get_raw()
-        if samples and m < 20:
-            log("User stepped off.")
-            break
-        if not samples and m < 20:
-            continue
-        samples.append(m)
-        if len(samples) == 1:
-            log("Measurement started, please wait...")
-        if len(samples) > 200:
-            break
-
-    board.close()
+    try:
+        while True:
+            m = get_raw()
+            if samples and m < 20:
+                log("User stepped off.")
+                break
+            if not samples and m < 20:
+                continue
+            samples.append(m)
+            if len(samples) == 1:
+                log("Measurement started, please wait...")
+            if len(samples) > 200:
+                break
+    finally:
+        board.close()
 
     final = statistics.median(samples) + adjust
     log(f"Done, weight: {final:.1f}.")
