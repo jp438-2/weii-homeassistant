@@ -123,12 +123,13 @@ def _measure_blocking(address: str, adjust: float) -> Optional[float]:
     deadline = time.monotonic() + DISCOVERY_TIMEOUT
     board = None
     while time.monotonic() < deadline:
-        matches = [
-            path for path in evdev.list_devices()
-            if evdev.InputDevice(path).name == "Nintendo Wii Remote Balance Board"
-        ]
-        if matches:
-            board = evdev.InputDevice(matches[0])
+        for path in evdev.list_devices():
+            dev = evdev.InputDevice(path)
+            if dev.name == "Nintendo Wii Remote Balance Board":
+                board = dev
+                break
+            dev.close()
+        if board:
             break
         time.sleep(0.5)
 
@@ -142,10 +143,7 @@ def _measure_blocking(address: str, adjust: float) -> Optional[float]:
     # --- Read samples ---
     def get_raw() -> float:
         data: list[Optional[float]] = [None] * 4
-        while True:
-            event = board.read_one()
-            if event is None:
-                continue
+        for event in board.read_loop():
             if event.code == ecodes.ABS_HAT1X:
                 data[0] = event.value / 100
             elif event.code == ecodes.ABS_HAT0X:
@@ -234,7 +232,7 @@ async def handle_measure(request: web.Request) -> web.Response:
     if not address or address == "AA:BB:CC:DD:EE:FF":
         return web.json_response({"error": "No address configured in add-on options"}, status=400)
     adjust = float(options.get("adjust", 0.0))
-    asyncio.ensure_future(do_measure(address, adjust))
+    asyncio.create_task(do_measure(address, adjust))
     return web.json_response({"status": "started"}, status=202)
 
 
