@@ -35,10 +35,11 @@ def load_options() -> dict:
 # ---------------------------------------------------------------------------
 
 class State:
-    status: str = "idle"          # idle | scanning | measuring | timed_out | error
-    log: list[str] = []
-    weight: Optional[float] = None
-    measuring: bool = False
+    def __init__(self) -> None:
+        self.status: str = "idle"  # idle | scanning | measuring | timed_out | error
+        self.log: list[str] = []
+        self.weight: Optional[float] = None
+        self.measuring: bool = False
 
 state = State()
 
@@ -196,7 +197,7 @@ async def do_measure(address: str, adjust: float) -> None:
     state.status = "scanning"
     state.log = []
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         result = await loop.run_in_executor(None, _measure_blocking, address, adjust)
         if result is not None:
@@ -455,30 +456,22 @@ INDEX_HTML = """\
         updateUI(data);
         if (data.status === "idle" || data.status === "timed_out" || data.status === "error") {
           stopPolling();
-          // Refresh the graph with the latest measurements
-          refreshChart();
+          refreshChart(data);
         }
       } catch (e) { /* ignore network blips during polling */ }
     }
 
-    async function refreshChart() {
-      try {
-        const res = await fetch(BASE + "/status");
-        const data = await res.json();
-        // Re-fetch measurements by reloading — simpler than a separate endpoint
-        // since the page already has initial data; just update in-place from status
-        if (data.weight !== null) {
-          const today = new Date().toISOString().slice(0, 10);
-          // Find and update today's point, or append it
-          const existing = initialData.find(d => d.date === today);
-          if (existing) {
-            existing.weight = data.weight;
-          } else {
-            initialData.push({ date: today, weight: data.weight });
-          }
-          buildChart(initialData);
+    function refreshChart(data) {
+      if (data.weight !== null) {
+        const today = new Date().toISOString().slice(0, 10);
+        const existing = initialData.find(d => d.date === today);
+        if (existing) {
+          existing.weight = data.weight;
+        } else {
+          initialData.push({ date: today, weight: data.weight });
         }
-      } catch (e) {}
+        buildChart(initialData);
+      }
     }
 
     function updateUI(data) {
@@ -547,8 +540,19 @@ INDEX_HTML = """\
 # App entry point
 # ---------------------------------------------------------------------------
 
+@web.middleware
+async def ingress_middleware(request: web.Request, handler) -> web.Response:
+    # The HA ingress proxy prepends a path prefix to every request.
+    # Normalise it so our handlers always see /, /measure, /status.
+    ingress_path = request.headers.get("X-Ingress-Path", "").rstrip("/")
+    if ingress_path and request.path.startswith(ingress_path):
+        stripped = request.path[len(ingress_path):] or "/"
+        request = request.clone(rel_url=stripped)
+    return await handler(request)
+
+
 def main() -> None:
-    app = web.Application()
+    app = web.Application(middlewares=[ingress_middleware])
     app.router.add_get("/", handle_index)
     app.router.add_post("/measure", handle_measure)
     app.router.add_get("/status", handle_status)
